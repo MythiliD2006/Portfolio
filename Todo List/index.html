@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mythu's Todo List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 48px 16px 80px;
+    }
+
+    .app { width: 100%; max-width: 480px; }
+
+    .header { text-align: center; margin-bottom: 32px; }
+    .header h1 {
+      font-family: 'Pacifico', cursive;
+      font-size: 30px; color: #fff;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .header p { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 6px; font-weight: 500; }
+
+    .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+    .stat-card {
+      flex: 1; background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 16px; padding: 12px; text-align: center; color: #fff;
+    }
+    .stat-card .num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .stat-card .lbl { font-size: 11px; opacity: 0.8; margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .progress-wrap { background: rgba(255,255,255,0.2); border-radius: 99px; height: 6px; margin-bottom: 20px; overflow: hidden; }
+    .progress-bar {
+      height: 100%; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.6));
+      border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); width: 0%;
+    }
+
+    .card { background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+
+    .input-row { display: flex; gap: 8px; margin-bottom: 18px; }
+    .input-row input {
+      flex: 1; padding: 13px 16px; border-radius: 14px;
+      border: 2px solid #ede9fe; background: #faf9ff;
+      font-family: 'Nunito', sans-serif; font-size: 14px;
+      font-weight: 600; color: #3b3663; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-row input:focus { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,0.08); }
+    .input-row input::placeholder { color: #c4b5fd; font-weight: 500; }
+
+    .btn-add {
+      padding: 13px 18px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff; border: none; border-radius: 14px;
+      font-family: 'Nunito', sans-serif; font-size: 20px;
+      font-weight: 700; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35); line-height: 1;
+    }
+    .btn-add:hover  { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(124,58,237,0.45); }
+    .btn-add:active { transform: scale(0.95); }
+
+    .filters {
+      display: flex; gap: 6px; margin-bottom: 18px;
+      background: #f5f3ff; border-radius: 14px; padding: 5px;
+    }
+    .filter-btn {
+      flex: 1; font-family: 'Nunito', sans-serif; font-size: 12px;
+      font-weight: 700; padding: 7px 0; border-radius: 10px;
+      border: none; background: transparent; color: #a78bfa;
+      cursor: pointer; transition: all 0.2s;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .filter-btn.active { background: #fff; color: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,0.15); }
+
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .task-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; background: #faf9ff;
+      border: 2px solid #ede9fe; border-radius: 16px;
+      transition: all 0.2s; animation: slideIn 0.25s ease both;
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform: translateY(8px) scale(0.98); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+    .task-item:hover { border-color: #c4b5fd; box-shadow: 0 4px 16px rgba(124,58,237,0.1); transform: translateY(-1px); }
+    .task-item.done  { background: #f9fafb; border-color: #e5e7eb; }
+
+    .task-check {
+      appearance: none; -webkit-appearance: none;
+      width: 22px; height: 22px; border-radius: 8px;
+      border: 2px solid #c4b5fd; cursor: pointer; flex-shrink: 0;
+      position: relative; transition: all 0.2s; background: #fff;
+    }
+    .task-check:checked { background: linear-gradient(135deg, #7c3aed, #a855f7); border-color: transparent; }
+    .task-check:checked::after {
+      content: ''; position: absolute;
+      top: 4px; left: 7px; width: 5px; height: 9px;
+      border: 2.5px solid #fff; border-top: none; border-left: none;
+      transform: rotate(42deg);
+    }
+
+    .task-text { flex: 1; font-size: 14px; font-weight: 600; color: #3b3663; line-height: 1.4; }
+    .task-item.done .task-text { text-decoration: line-through; color: #c4b5fd; font-weight: 500; }
+
+    .btn-delete {
+      background: none; border: none; color: #ddd6fe;
+      font-size: 16px; cursor: pointer; padding: 4px;
+      border-radius: 8px; opacity: 0;
+      transition: opacity 0.2s, color 0.2s, background 0.2s; line-height: 1;
+    }
+    .task-item:hover .btn-delete { opacity: 1; }
+    .btn-delete:hover { color: #ef4444; background: #fef2f2; }
+
+    .empty-state { text-align: center; padding: 40px 0 10px; display: none; }
+    .empty-state p { font-size: 14px; color: #a78bfa; font-weight: 600; }
+
+    .footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 18px; padding-top: 16px; border-top: 2px solid #f5f3ff;
+      font-size: 12px; color: #a78bfa; font-weight: 600;
+    }
+    .btn-clear {
+      background: none; border: none; font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 700; color: #c4b5fd;
+      cursor: pointer; transition: color 0.2s;
+    }
+    .btn-clear:hover { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <div class="header">
+      <h1>Mythu's Todo List</h1>
+      <p id="dateLabel"></p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num" id="statLeft">0</div><div class="lbl">Pending</div></div>
+      <div class="stat-card"><div class="num" id="statDone">0</div><div class="lbl">Done</div></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="card">
+      <div class="input-row">
+        <input type="text" id="taskInput" placeholder="What's on your mind?" autocomplete="off"/>
+        <button class="btn-add" id="addBtn">+</button>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="active">Active</button>
+        <button class="filter-btn" data-filter="completed">Done</button>
+      </div>
+
+      <ul class="task-list" id="taskList"></ul>
+
+      <div class="empty-state" id="emptyState">
+        <p>No tasks yet — add one above!</p>
+      </div>
+
+      <div class="footer">
+        <span id="taskCount"></span>
+        <button class="btn-clear" id="clearBtn">🗑 Clear completed</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('mythu-tasks')) || [];
+    let filter = 'all';
+
+    const taskInput   = document.getElementById('taskInput');
+    const addBtn      = document.getElementById('addBtn');
+    const taskList    = document.getElementById('taskList');
+    const emptyState  = document.getElementById('emptyState');
+    const taskCount   = document.getElementById('taskCount');
+    const clearBtn    = document.getElementById('clearBtn');
+    const progressBar = document.getElementById('progressBar');
+    const filterBtns  = document.querySelectorAll('.filter-btn');
+    const statTotal   = document.getElementById('statTotal');
+    const statLeft    = document.getElementById('statLeft');
+    const statDone    = document.getElementById('statDone');
+
+    document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric'
+    });
+
+    function save() { localStorage.setItem('mythu-tasks', JSON.stringify(tasks)); }
+
+    function render() {
+      const visible = tasks.filter(t =>
+        filter === 'active'    ? !t.completed :
+        filter === 'completed' ?  t.completed : true
+      );
+
+      taskList.innerHTML = '';
+      emptyState.style.display = visible.length === 0 ? 'block' : 'none';
+
+      visible.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (task.completed ? ' done' : '');
+        li.dataset.id = task.id;
+        li.innerHTML = `
+          <input type="checkbox" class="task-check" ${task.completed ? 'checked' : ''}/>
+          <span class="task-text">${esc(task.text)}</span>
+          <button class="btn-delete" title="Delete">✕</button>
+        `;
+        taskList.appendChild(li);
+      });
+
+      const done  = tasks.filter(t =>  t.completed).length;
+      const total = tasks.length;
+      const rem   = tasks.filter(t => !t.completed).length;
+
+      taskCount.textContent   = `${rem} task${rem !== 1 ? 's' : ''} remaining`;
+      progressBar.style.width = total ? (done / total * 100) + '%' : '0%';
+      statTotal.textContent   = total;
+      statLeft.textContent    = rem;
+      statDone.textContent    = done;
+    }
+
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (!text) {
+        taskInput.style.borderColor = '#ef4444';
+        taskInput.style.boxShadow = '0 0 0 4px rgba(239,68,68,0.1)';
+        setTimeout(() => {
+          taskInput.style.borderColor = '#ede9fe';
+          taskInput.style.boxShadow = 'none';
+        }, 700);
+        return;
+      }
+      tasks.unshift({ id: Date.now(), text, completed: false });
+      taskInput.value = '';
+      taskInput.focus();
+      save(); render();
+    }
+
+    taskList.addEventListener('click', e => {
+      const li = e.target.closest('.task-item');
+      if (!li) return;
+      const id = Number(li.dataset.id);
+      if (e.target.classList.contains('task-check')) {
+        tasks.find(t => t.id === id).completed ^= true;
+        save(); render();
+      }
+      if (e.target.classList.contains('btn-delete')) {
+        tasks = tasks.filter(t => t.id !== id);
+        save(); render();
+      }
+    });
+
+    addBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keydown', e => e.key === 'Enter' && addTask());
+
+    filterBtns.forEach(b => b.addEventListener('click', () => {
+      filterBtns.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      filter = b.dataset.filter;
+      render();
+    }));
+
+    clearBtn.addEventListener('click', () => {
+      tasks = tasks.filter(t => !t.completed);
+      save(); render();
+    });
+
+    function esc(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    render();
+  </script>
+</body>
+</html>
